@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const path = require('path'); // <-- INCLUÍDO: Necessário para mapear os caminhos de pastas
 const connectDB = require('./config/database.js');
 
 // --- IMPORTAÇÃO DOS ROTEADORES DO ECOSSISTEMA ---
@@ -27,6 +28,15 @@ app.use('/api/esg', esgRoutes);
 app.use('/api/supply', supplyRoutes);   
 app.use('/api/demand', demandRoutes);   // Injeção do motor IA de Demanda
 app.use('/api/reverse', reverseRoutes); // Injeção da Economia Circular/ESG
+
+// --- SERVIR ARQUIVOS ESTÁTICOS DO FRONTEND ---
+// Como server.js está em src/backend, subimos duas pastas para achar o frontend na raiz
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+// Rota curinga: Qualquer link que não seja da API vai abrir o index.html principal
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
