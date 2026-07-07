@@ -392,12 +392,28 @@ document.addEventListener('click', (e) => {
     if (clickedToggle && sidebarElement) {
         e.preventDefault();
         e.stopPropagation();
-        sidebarElement.classList.toggle('mobile-open');
+        const isOpen = sidebarElement.classList.toggle('mobile-open');
+        const btn = document.getElementById('mobile-menu-btn');
+        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
         return;
     }
     if (sidebarElement && sidebarElement.classList.contains('mobile-open')) {
         if (!sidebarElement.contains(e.target)) {
             sidebarElement.classList.remove('mobile-open');
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+    }
+});
+
+// Fechar menu com tecla Esc quando aberto
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const sidebarElement = document.querySelector('.sidebar');
+        if (sidebarElement && sidebarElement.classList.contains('mobile-open')) {
+            sidebarElement.classList.remove('mobile-open');
+            const btn = document.getElementById('mobile-menu-btn');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
         }
     }
 });

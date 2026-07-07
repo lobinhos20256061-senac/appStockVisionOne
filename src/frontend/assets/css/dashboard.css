@@ -74,6 +74,9 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
+/* Botão de toggle do menu móvel: escondido por padrão em desktop */
+.menu-toggle-btn { display: none; }
+
 /* Grid de Cartões Indicadores (Responsivo) */
 .metrics-grid {
     display: grid;
@@ -160,8 +163,50 @@ th {
     .dashboard-container {
         grid-template-columns: 1fr;
     }
-    
     .sidebar {
-        display: none; /* Em sistemas reais, aqui aplicaríamos um menu hambúrguer */
+        /* Drawer behaviour on mobile: hidden by default, slides in on `.mobile-open` */
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 260px;
+        transform: translateX(-110%);
+        transition: transform var(--transition-speed) ease;
+        z-index: 1100;
+        box-shadow: 0 8px 24px rgba(2,8,23,0.25);
+        display: flex;
+        background-color: var(--bg-primary);
     }
+
+    .sidebar.mobile-open {
+        transform: translateX(0);
+    }
+
+    /* Backdrop implemented via pseudo-element to avoid markup changes */
+    .sidebar.mobile-open::before {
+        content: "";
+        position: fixed;
+        inset: 0 0 0 260px; /* cover the rest of the viewport to the right of the drawer */
+        background: rgba(0,0,0,0.35);
+        z-index: 1099;
+    }
+
+    /* Menu toggle button (hamburger) */
+    .menu-toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        font-size: 1.25rem;
+        padding: 0.5rem 0.75rem;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    /* Show toggle only on mobile */
+    #mobile-menu-btn { display: inline-flex; }
+
+    /* Make the theme button a bit smaller on mobile to fit */
+    .theme-btn { margin-left: 0.5rem; }
 }
