@@ -39,7 +39,7 @@
       <main class="main-content">
         <header class="top-bar">
           <div class="user-info">
-            <h3>🤝 Recebimento Automatizado por XML de NF-e</h3>
+            <h3>🤝 Pedidos & Fornecedores</h3>
             <p id="company-name-display">
               Carregando almoxarifado corporativo...
             </p>
@@ -53,6 +53,44 @@
             🌓
           </button>
         </header>
+
+        <section class="data-section">
+          <h3>🤝 Cadastro de Fornecedores</h3>
+          <div style="display:grid; gap:1.5rem; margin-top:1rem;">
+            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:1.5rem;">
+              <form id="partner-form" style="display:flex; flex-direction:column; gap:1rem;">
+                <div class="input-group"><label>Nome da Empresa</label><input type="text" id="partner-companyName" required></div>
+                <div class="input-group"><label>E-mail</label><input type="email" id="partner-email" required></div>
+                <div class="input-group"><label>Telefone</label><input type="tel" id="partner-phone" required></div>
+                <div class="input-group"><label>Categoria Atendida</label><input type="text" id="partner-categorySupplied" placeholder="Ex: Mercearia, Bebidas" required></div>
+                <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:1rem;">
+                  <div class="input-group"><label>Prazo de Entrega (dias)</label><input type="number" id="partner-deliveryDays" min="1" required></div>
+                  <div class="input-group"><label>Faixa de Preço</label><select id="partner-priceTier" required><option value="">Selecione</option><option value="Baixo">Baixo</option><option value="Médio">Médio</option><option value="Alto">Alto</option></select></div>
+                </div>
+                <div class="input-group"><label>Condição de Pagamento</label><select id="partner-paymentCondition" required><option value="">Selecione</option><option value="Pix">Pix</option><option value="Boleto">Boleto</option><option value="À Vista">À Vista</option><option value="Crédito">Crédito</option></select></div>
+                <button type="submit" class="btn" style="width:auto; padding:0.8rem;">➕ Cadastrar Fornecedor</button>
+              </form>
+              <div>
+                <h4>Fornecedores Cadastrados</h4>
+                <div class="table-responsive" style="margin-top:1rem; max-height:380px; overflow-y:auto;">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Empresa</th>
+                        <th>Categoria</th>
+                        <th>Prazo</th>
+                        <th>Preço</th>
+                      </tr>
+                    </thead>
+                    <tbody id="partner-table-body">
+                      <tr><td colspan="4" style="text-align:center; color:var(--text-secondary);">Nenhum fornecedor carregado ainda.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <div
           class="stock-workspace"
@@ -135,6 +173,7 @@
 
     <script src="../assets/js/theme.js"></script>
     <script src="../assets/js/api.js"></script>
+    <script src="../assets/js/main.js"></script>
     <script>
       function handleUserLogout() {
         if (confirm("Deseja realmente encerrar a sessão corporativa?")) {
@@ -146,12 +185,76 @@
       document.addEventListener("DOMContentLoaded", () => {
         const form = document.getElementById("xml-invoice-form");
         const reportBody = document.getElementById("xml-report-body");
+        const partnerForm = document.getElementById("partner-form");
+        const partnerTableBody = document.getElementById("partner-table-body");
 
         const activeUser = TokenManager.getUser();
         if (activeUser) {
           document.getElementById("company-name-display").innerText =
             `Central de Recebimento: ${activeUser.company}`;
         }
+
+        const renderPartnerRows = (partners) => {
+          if (!partners || partners.length === 0) {
+            partnerTableBody.innerHTML =
+              '<tr><td colspan="4" style="text-align:center; color:var(--text-secondary);">Nenhum fornecedor cadastrado ainda.</td></tr>';
+            return;
+          }
+
+          partnerTableBody.innerHTML = '';
+          partners.forEach((partner) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${partner.companyName}</td>
+              <td>${partner.categorySupplied}</td>
+              <td>${partner.deliveryDays} dias</td>
+              <td>${partner.priceTier}</td>
+            `;
+            partnerTableBody.appendChild(row);
+          });
+        };
+
+        const loadPartnerList = async () => {
+          try {
+            const partners = await PartnerAPI.getPartners();
+            renderPartnerRows(partners);
+          } catch (error) {
+            partnerTableBody.innerHTML =
+              '<tr><td colspan="4" style="text-align:center; color:var(--color-rupture);">Falha ao carregar fornecedores.</td></tr>';
+            console.error('[Partners Page] Load Partners Error:', error.message);
+          }
+        };
+
+        partnerForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const partnerPayload = {
+            companyName: document.getElementById('partner-companyName').value.trim(),
+            email: document.getElementById('partner-email').value.trim(),
+            phone: document.getElementById('partner-phone').value.trim(),
+            categorySupplied: document.getElementById('partner-categorySupplied').value.trim(),
+            deliveryDays: Number(document.getElementById('partner-deliveryDays').value),
+            priceTier: document.getElementById('partner-priceTier').value,
+            paymentCondition: document.getElementById('partner-paymentCondition').value
+          };
+
+          try {
+            const submitBtn = partnerForm.querySelector('.btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Cadastrando...';
+
+            const result = await PartnerAPI.createPartner(partnerPayload);
+            alert(result.message || 'Fornecedor cadastrado com sucesso!');
+            partnerForm.reset();
+            await loadPartnerList();
+          } catch (error) {
+            alert(`Falha ao cadastrar fornecedor: ${error.message}`);
+          } finally {
+            const submitBtn = partnerForm.querySelector('.btn');
+            submitBtn.disabled = false;
+            submitBtn.innerText = '➕ Cadastrar Fornecedor';
+          }
+        });
 
         form.addEventListener("submit", async (e) => {
           e.preventDefault();
@@ -184,6 +287,8 @@
             submitBtn.disabled = false;
           }
         });
+
+        loadPartnerList();
       });
     </script>
   </body>

@@ -96,6 +96,18 @@ exports.generateAutomatedOrders = async (req, res) => {
 };
 
 /**
+ * 📋 LISTAR FORNECEDORES CADASTRADOS
+ */
+exports.listPartners = async (req, res) => {
+    try {
+        const partners = await Partner.find().sort({ companyName: 1 });
+        return res.status(200).json(partners);
+    } catch (error) {
+        return res.status(500).json({ message: 'Erro ao buscar fornecedores.', error: error.message });
+    }
+};
+
+/**
  * 🤝 CADASTRO MANUAL DE PARCEIROS (FORNECEDORES)
  */
 exports.createPartner = async (req, res) => {

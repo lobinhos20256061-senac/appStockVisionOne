@@ -3,10 +3,15 @@
  * Este arquivo centraliza todas as chamadas HTTP para o servidor Node.js.
  */
 
-const BASE_URL = 'https://stockvision-d2r0.onrender.com/api';
+const FALLBACK_BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = window.location.protocol === 'file:' ? FALLBACK_BASE_URL : `${window.location.origin}/api`;
 
 // const BASE_URL = 'http://localhost:3000/api';
 
+const safeJsonResponse = async (response) => {
+    const text = await response.text();
+    return text ? JSON.parse(text) : {};
+};
 
 /**
  * 💾 GERENCIADOR DE SESSÃO LOCAL (LocalStorage)
@@ -288,5 +293,46 @@ const StockAPI = {
             if (!response.ok) throw new Error(data.message || 'Erro ao processar auditoria.');
             return data;
         } catch (error) { throw error; }
+    }
+};
+
+const PartnerAPI = {
+    getPartners: async () => {
+        try {
+            const token = TokenManager.getToken();
+            const headers = {};
+            if (token) headers.Authorization = `Bearer ${token}`;
+
+            const response = await fetch(`${BASE_URL}/supply/partners`, {
+                method: 'GET',
+                headers
+            });
+            const data = await safeJsonResponse(response);
+            if (!response.ok) throw new Error(data.message || 'Erro ao carregar fornecedores.');
+            return data;
+        } catch (error) {
+            console.error('[API Partner - Get Partners Error]:', error.message);
+            throw error;
+        }
+    },
+
+    createPartner: async (partnerPayload) => {
+        try {
+            const token = TokenManager.getToken();
+            const headers = { 'Content-Type': 'application/json' };
+            if (token) headers.Authorization = `Bearer ${token}`;
+
+            const response = await fetch(`${BASE_URL}/supply/partners`, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(partnerPayload)
+            });
+            const data = await safeJsonResponse(response);
+            if (!response.ok) throw new Error(data.message || 'Erro ao cadastrar fornecedor.');
+            return data;
+        } catch (error) {
+            console.error('[API Partner - Create Partner Error]:', error.message);
+            throw error;
+        }
     }
 };
