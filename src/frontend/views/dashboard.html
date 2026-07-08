@@ -70,6 +70,35 @@
           </div>
         </section>
 
+        <section class="charts-section">
+          <div class="card chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>Composição do estoque</h3>
+                <p>Quantidade em estoque por categoria</p>
+              </div>
+            </div>
+            <div id="category-chart" class="chart-canvas chart-bars" aria-label="Gráfico de barras do estoque por categoria"></div>
+          </div>
+
+          <div class="card chart-card">
+            <div class="chart-header">
+              <div>
+                <h3>Saúde operacional</h3>
+                <p>Status dos itens em estoque</p>
+              </div>
+            </div>
+            <div class="chart-canvas chart-donut-wrapper">
+              <div id="status-chart" class="donut-chart" aria-label="Gráfico de distribuição de status"></div>
+              <div class="donut-center">
+                <strong id="status-chart-total">0</strong>
+                <span>itens</span>
+              </div>
+            </div>
+            <div id="status-legend" class="legend"></div>
+          </div>
+        </section>
+
         <section class="data-section">
           <h3>⚠️ Alertas Operacionais Críticos</h3>
           <div class="table-responsive">

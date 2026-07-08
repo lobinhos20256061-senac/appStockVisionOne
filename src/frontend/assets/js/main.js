@@ -61,6 +61,91 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     const metricsGrid = document.querySelector('.metrics-grid');
     const alertsTableBody = document.getElementById('alerts-table-body');
+
+    const buildCategoryChart = (inventoryProducts) => {
+        const chartEl = document.getElementById('category-chart');
+        if (!chartEl) return;
+
+        const grouped = inventoryProducts.reduce((acc, product) => {
+            const category = product.category || 'Sem categoria';
+            if (!acc[category]) acc[category] = { category, total: 0 };
+            acc[category].total += Number(product.quantityInStock || 0);
+            return acc;
+        }, {});
+
+        const entries = Object.values(grouped).sort((a, b) => b.total - a.total).slice(0, 6);
+
+        if (entries.length === 0) {
+            chartEl.innerHTML = '<div class="empty-state">Nenhum volume de estoque registrado no momento.</div>';
+            return;
+        }
+
+        const maxValue = Math.max(...entries.map(item => item.total), 1);
+        chartEl.innerHTML = entries.map(item => `
+            <div class="bar-group">
+                <div class="bar-meta">
+                    <span class="bar-label">${item.category}</span>
+                    <span class="bar-value">${item.total.toLocaleString('pt-BR')} un</span>
+                </div>
+                <div class="bar-track">
+                    <div class="bar" style="width:${Math.max(8, (item.total / maxValue) * 100)}%"></div>
+                </div>
+            </div>
+        `).join('');
+    };
+
+    const buildStatusChart = (inventoryProducts) => {
+        const chartEl = document.getElementById('status-chart');
+        const totalEl = document.getElementById('status-chart-total');
+        const legendEl = document.getElementById('status-legend');
+        if (!chartEl || !totalEl || !legendEl) return;
+
+        const grouped = inventoryProducts.reduce((acc, product) => {
+            const status = product.statusVisual?.statusTag || 'Normal';
+            if (!acc[status]) acc[status] = { label: status, count: 0 };
+            acc[status].count += 1;
+            return acc;
+        }, {});
+
+        const entries = Object.values(grouped).sort((a, b) => b.count - a.count);
+        const total = entries.reduce((sum, item) => sum + item.count, 0);
+        totalEl.textContent = total.toLocaleString('pt-BR');
+
+        if (entries.length === 0) {
+            chartEl.style.background = 'conic-gradient(var(--color-main-blue) 0 100%)';
+            legendEl.innerHTML = '<div class="legend-item"><span><span class="legend-swatch" style="background: var(--color-main-blue)"></span>Nenhum dado</span><strong>0%</strong></div>';
+            return;
+        }
+
+        const colors = {
+            'Ruptura': 'var(--color-rupture)',
+            'Estoque Baixo': 'var(--color-rupture)',
+            'Excesso': 'var(--color-excess)',
+            'Normal': 'var(--color-esg)'
+        };
+
+        let start = 0;
+        const segments = entries.map(item => {
+            const color = colors[item.label] || 'var(--color-main-blue)';
+            const percentage = (item.count / total) * 100;
+            const end = start + percentage;
+            const segment = `${color} ${start}% ${end}%`;
+            start = end;
+            return segment;
+        }).join(', ');
+
+        chartEl.style.background = `conic-gradient(${segments})`;
+        legendEl.innerHTML = entries.map(item => {
+            const color = colors[item.label] || 'var(--color-main-blue)';
+            const percentage = total ? Math.round((item.count / total) * 100) : 0;
+            return `
+                <div class="legend-item">
+                    <span><span class="legend-swatch" style="background:${color}"></span>${item.label}</span>
+                    <strong>${percentage}%</strong>
+                </div>
+            `;
+        }).join('');
+    };
     
     if (metricsGrid && alertsTableBody) {
         const renderDashboardData = async () => {
@@ -98,6 +183,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     cards[2].querySelector('.card-value').textContent = formatCurrency(financials.estimatedProfit || 0);
                     cards[3].querySelector('.card-value').textContent = `${(indicators.stockLevel || 0).toLocaleString('pt-BR')} un`;
                 }
+
+                buildCategoryChart(inventoryProducts);
+                buildStatusChart(inventoryProducts);
 
                 // --- RENDERIZAR TABELA DE ALERTAS OPERACIONAIS CRÍTICOS (CORRIGIDO) ---
                 alertsTableBody.innerHTML = '';
