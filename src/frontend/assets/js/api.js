@@ -3,9 +3,9 @@
  * Este arquivo centraliza todas as chamadas HTTP para o servidor Node.js.
  */
 
-const BASE_URL = 'http://localhost:3000/api';
-// const FALLBACK_BASE_URL = 'http://localhost:3000/api';
-// const BASE_URL = window.location.protocol === 'file:' ? FALLBACK_BASE_URL : `${window.location.origin}/api`;
+// const BASE_URL = 'http://localhost:3000/api';
+const FALLBACK_BASE_URL = 'http://localhost:3000/api';
+const BASE_URL = window.location.protocol === 'file:' ? FALLBACK_BASE_URL : `${window.location.origin}/api`;
 
 // const BASE_URL = 'http://localhost:3000/api';
 
