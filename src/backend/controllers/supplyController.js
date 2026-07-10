@@ -20,9 +20,8 @@ exports.generateAutomatedOrders = async (req, res) => {
         let automatedOrderList = [];
 
         for (let product of products) {
-            // MOCK DE HISTÓRICO: Simula as saídas das últimas 4 semanas (Períodos analisados)
-            // Em uma estrutura expandida, essas variáveis viriam de uma tabela de 'SalesHistory'
-            const historicoSaidasSemanais = 0
+            // HISTÓRICO DE VENDAS: Extrai as saídas do histórico do produto para simular IA de tendência
+            const historicoSaidasSemanais = product.salesHistory && product.salesHistory.length > 0 ? product.salesHistory : [0, 0, 0];
             const somaVendas = historicoSaidasSemanais.reduce((acc, v) => acc + v, 0);
             
             // FÓRMULA LOGÍSTICA: Previsão de Demanda Simples
@@ -54,7 +53,7 @@ exports.generateAutomatedOrders = async (req, res) => {
                         return pesoPreco[a.priceTier] - pesoPreco[b.priceTier];
                     });
                     
-                    selectedPartner = candidatePartners; // Seleciona o melhor pontuado
+                    selectedPartner = candidatePartners[0]; // Seleciona o melhor pontuado (primeiro elemento do array)
                 }
 
                 // Determina datas com base nos prazos do fornecedor eleito
